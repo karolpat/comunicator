@@ -190,9 +190,9 @@ public class Server implements Runnable {
 						}
 						break;
 					case "/to": // to nick - set recipient for further messages, without parameters - clear the
-								// setting
 						if (st.hasMoreTokens()) {
 							String receiver = st.nextToken();
+                                                        String message = st.nextToken();
 							List<Integer> users = new ArrayList<Integer>(); //list of message receiver 
 							
 							//retrieve group id if exists; otherwise -1
@@ -204,26 +204,40 @@ public class Server implements Runnable {
 							}else {
 								users.add(new User(receiver).getId());
 							}
-							
 							for (int id : users) {
-								if (id != userId) {
-									
-									User user = new User(id);
-									if (user.getId() > 0) {
-										userIdTo = user.getId();
-										out.println("Messages will be sent to " + user.toString());
+                                                            System.out.println("id "+ id);
+								if (id != userId){	
+									if (id > 0) {
+										userIdTo = id;
+										out.println("Messages will be sent to " + new User(id).getNick());
 										session.update(userId, userIdTo);
+                                                                                int n = 0;
+						for (Server server : serverPool) {
+							if (server != this && server.userId > 0 && server.userId == userIdTo) {
+								Message m = new Message(userId, server.userId, message);
+								out.println(m); // to me
+								server.out.println(m); // to recipient
+								n++;
+							}
+						}
+						out.println("Message sent to " + n + " client(s)");
+						refreshView();
 									} else {
 										out.println("User with " + receiver + " does not exist");
 									}								
-								}
+                                                                }
+					if (userId > 0) {
+						
+					} else {
+						out.println("You have to log in first");
+					}
 							}
-							
 						} else {
 							userIdTo = 0;
 							out.println("Messages will be sent to none");
 							session.update(userId, 0);
 						}
+                                   
 						break;
 					case "/who": // show info about logged users
 						int n = 0;
@@ -360,14 +374,17 @@ public class Server implements Runnable {
 						out.println("Unknown command " + cmd);
 					}
 				} else { // redistribution of message
+                                    System.out.println("userid "+ userId);
 					if (userId > 0) {
 						int n = 0;
 						for (Server server : serverPool) {
+                                                    System.out.println("userid "+ userId);
 							if (server != this && server.userId > 0 && server.userId == userIdTo) {
 								Message m = new Message(userId, server.userId, s);
 								out.println(m); // to me
 								server.out.println(m); // to recipient
 								n++;
+                                                                System.out.println("redistribution");
 							}
 						}
 						out.println("Message sent to " + n + " client(s)");
