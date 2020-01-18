@@ -192,52 +192,46 @@ public class Server implements Runnable {
 					case "/to": // to nick - set recipient for further messages, without parameters - clear the
 						if (st.hasMoreTokens()) {
 							String receiver = st.nextToken();
-                                                        String message = st.nextToken();
-							List<Integer> users = new ArrayList<Integer>(); //list of message receiver 
-							
-							//retrieve group id if exists; otherwise -1
+							String message = st.nextToken("");
+							List<Integer> users = new ArrayList<Integer>(); // list of message receiver
+
+							// retrieve group id if exists; otherwise -1
 							int groupId = Group.groupExists(receiver);
-							
-							if(groupId != -1) {
+
+							if (groupId != -1) {
 								Group group = new Group(groupId, receiver);
 								users = group.getGroupMembers(groupId);
-							}else {
+							} else {
 								users.add(new User(receiver).getId());
 							}
 							for (int id : users) {
-                                                            System.out.println("id "+ id);
-								if (id != userId){	
+								if (id != userId) {
 									if (id > 0) {
 										userIdTo = id;
 										out.println("Messages will be sent to " + new User(id).getNick());
 										session.update(userId, userIdTo);
-                                                                                int n = 0;
-						for (Server server : serverPool) {
-							if (server != this && server.userId > 0 && server.userId == userIdTo) {
-								Message m = new Message(userId, server.userId, message);
-								out.println(m); // to me
-								server.out.println(m); // to recipient
-								n++;
-							}
-						}
-						out.println("Message sent to " + n + " client(s)");
-						refreshView();
+										int n = 0;
+										for (Server server : serverPool) {
+											if (server != this && server.userId > 0 && server.userId == userIdTo) {
+												Message m = new Message(userId, server.userId, message);
+												out.println(m); // to me
+												server.out.println(m); // to recipient
+												n++;
+											}
+										}
+										out.println("Message sent to " + n + " client(s)");
+										refreshView();
 									} else {
 										out.println("User with " + receiver + " does not exist");
-									}								
-                                                                }
-					if (userId > 0) {
-						
-					} else {
-						out.println("You have to log in first");
-					}
+									}
+								}
 							}
 						} else {
 							userIdTo = 0;
 							out.println("Messages will be sent to none");
 							session.update(userId, 0);
 						}
-                                   
+
 						break;
 					case "/who": // show info about logged users
 						int n = 0;
@@ -290,7 +284,7 @@ public class Server implements Runnable {
 						}
 						break;
 
-					case "/showMembers": 
+					case "/showMembers":
 						if (userId > 0) {
 							try {
 								String groupName = st.nextToken();
@@ -299,15 +293,15 @@ public class Server implements Runnable {
 									out.println("Group " + groupName + " does not exist");
 									break;
 								}
-								
-								Group group = new Group (groupId, groupName);
+
+								Group group = new Group(groupId, groupName);
 								List<Integer> users = new ArrayList<Integer>();
-								
+
 								if (User.isMember(userId, groupId)) {
 									users = group.getGroupMembers(groupId);
 									out.println("You are in group " + groupName);
-								}else {
-									out.println("You are not a member of the group "+ groupName);
+								} else {
+									out.println("You are not a member of the group " + groupName);
 								}
 
 								if (!users.isEmpty()) {
@@ -341,12 +335,12 @@ public class Server implements Runnable {
 
 								Group group = new Group(groupId, groupName);
 								List<Integer> users = new ArrayList<Integer>();
-								
+
 								if (User.isMember(userId, groupId)) {
 									users = group.getGroupMembers(groupId);
 									out.println("You are in group " + groupName);
-								}else {
-									out.println("You are not a member of the group "+ groupName);
+								} else {
+									out.println("You are not a member of the group " + groupName);
 								}
 
 								if (!users.isEmpty()) {
@@ -374,17 +368,17 @@ public class Server implements Runnable {
 						out.println("Unknown command " + cmd);
 					}
 				} else { // redistribution of message
-                                    System.out.println("userid "+ userId);
+					System.out.println("userid " + userId);
 					if (userId > 0) {
 						int n = 0;
 						for (Server server : serverPool) {
-                                                    System.out.println("userid "+ userId);
+							System.out.println("userid " + userId);
 							if (server != this && server.userId > 0 && server.userId == userIdTo) {
 								Message m = new Message(userId, server.userId, s);
 								out.println(m); // to me
 								server.out.println(m); // to recipient
 								n++;
-                                                                System.out.println("redistribution");
+								System.out.println("redistribution");
 							}
 						}
 						out.println("Message sent to " + n + " client(s)");
